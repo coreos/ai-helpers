@@ -1,0 +1,8 @@
+{
+  "name": "fcos-release",
+  "description": "Process the Fedora CoreOS release using the GitHub issues from coreos/fedora-coreos-streams",
+  "version": "1.0.0",
+  "author": {
+    "name": "Clement Verna"
+  }
+}
