@@ -1,0 +1,13 @@
+{
+  "name": "ai-helpers",
+  "owner": {
+    "name": "coreos"
+  },
+  "plugins": [
+    {
+      "name": "pipeline-status",
+      "source": "./plugins/pipeline-status",
+      "description": "Summarize the status of the RHCOS pipeline using Slack"
+    }
+  ]
+}
