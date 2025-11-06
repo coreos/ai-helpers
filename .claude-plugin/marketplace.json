@@ -13,6 +13,11 @@
       "name": "customer-cases",
       "source": "./plugins/customer-cases",
       "description": "Summarize the RHCOS OCPBUGS with an open Customer Case"
+    },
+    {
+      "name": "fcos-release",
+      "source": "./plugins/fcos-release",
+      "description": "Execute an FCOS release checklist"
     }
   ]
 }
