@@ -13,6 +13,11 @@
       "name": "customer-cases",
       "source": "./plugins/customer-cases",
       "description": "Summarize the RHCOS OCPBUGS with an open Customer Case"
+    },
+    {
+      "name": "rhcos-cve-analyzer",
+      "source": "./plugins/rhcos-cve-analyzer",
+      "description": "Process and Verify the RHEL CoreOS CVEs"
     }
   ]
 }
