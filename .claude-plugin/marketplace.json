@@ -18,6 +18,11 @@
       "name": "rhcos-cve-analyzer",
       "source": "./plugins/rhcos-cve-analyzer",
       "description": "Process and Verify the RHEL CoreOS CVEs"
+    },
+    {
+      "name": "jenkins-analyzer",
+      "source": "./plugins/jenkins-analyzer",
+      "description": "Process and analyze Jenkins job failures"
     }
   ]
 }
