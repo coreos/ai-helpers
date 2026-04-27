@@ -80,6 +80,12 @@ If you're contributing several related commands that warrant their own plugin:
    ```
 3. Register your plugin in `.claude-plugin/marketplace.json`
 
+## Skills
+
+The `skills/` directory contains specialized knowledge files for RHCOS/COREOS pipeline operations, build systems, and infrastructure management. Each skill is a `SKILL.md` file with YAML frontmatter.
+
+See [skills/README.md](skills/README.md) for details.
+
 ## License
 
 See [LICENSE](LICENSE) for details.
