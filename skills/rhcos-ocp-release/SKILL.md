@@ -59,6 +59,17 @@ curl -s "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestreams/accep
   jq -r '."4-stable"[] | select(startswith("4.21."))'
 ```
 
+## RHCOS Variants
+
+Starting with OCP 4.21, each release ships **two RHCOS variants** simultaneously:
+
+| Variant | Image Name | RHEL Base | OCP Versions |
+|---------|------------|-----------|--------------|
+| RHEL 9 | `rhel-coreos` | RHEL 9.x | 4.x – present |
+| RHEL 10 | `rhel-coreos-10` | RHEL 10.x | 4.21+ |
+
+When querying RPM packages or images for OCP 4.21+, always specify which variant you want with `--rpmdb-image`.
+
 ## RPM Package Lists
 
 The `oc adm release info --rpmdb` flag extracts RPM package information directly from the release image metadata without pulling the full container image. This is significantly faster than the traditional `podman pull` approach.
@@ -71,21 +82,39 @@ The `oc adm release info --rpmdb` flag extracts RPM package information directly
 ### List All RPMs in a Release
 
 ```bash
+# Default (RHEL 9 variant, all OCP versions)
 oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
   --rpmdb --rpmdb-cache /tmp/rpmdb-cache
+
+# Explicit RHEL 9 variant (OCP 4.21+)
+oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos
+
+# RHEL 10 variant (OCP 4.21+ only)
+oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10
 ```
 
 ### Query Specific Package
 
 ```bash
-# Get kernel version
+# RHEL 9 variant - get kernel version
 oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
-  --rpmdb --rpmdb-cache /tmp/rpmdb-cache | grep kernel
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos | grep kernel
 
 # Example output:
 #   kernel-5.14.0-570.19.1.el9_6
 #   kernel-core-5.14.0-570.19.1.el9_6
 #   kernel-modules-5.14.0-570.19.1.el9_6
+
+# RHEL 10 variant - get kernel version (OCP 4.21+)
+oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10 | grep kernel
+
+# Example output:
+#   kernel-6.12.0-x.el10
+#   kernel-core-6.12.0-x.el10
+#   kernel-modules-6.12.0-x.el10
 ```
 
 ### Compare RPMs Between Releases
@@ -93,10 +122,17 @@ oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
 The `--rpmdb-diff` flag shows package changes between two releases:
 
 ```bash
+# Compare RHEL 9 variant across two releases
 oc adm release info \
   quay.io/openshift-release-dev/ocp-release:<version1>-x86_64 \
   quay.io/openshift-release-dev/ocp-release:<version2>-x86_64 \
-  --rpmdb-diff --rpmdb-cache /tmp/rpmdb-cache
+  --rpmdb-diff --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos
+
+# Compare RHEL 10 variant across two releases (OCP 4.21+)
+oc adm release info \
+  quay.io/openshift-release-dev/ocp-release:<version1>-x86_64 \
+  quay.io/openshift-release-dev/ocp-release:<version2>-x86_64 \
+  --rpmdb-diff --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10
 
 # Example output:
 # Changed:
@@ -110,7 +146,7 @@ oc adm release info \
 
 ### Target Other Images
 
-By default, `--rpmdb` queries the machine-os (rhel-coreos) image. Use `--rpmdb-image` to target other images:
+By default, `--rpmdb` queries the `rhel-coreos` (RHEL 9) image. Use `--rpmdb-image` to target other images:
 
 ```bash
 oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
@@ -122,8 +158,11 @@ oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
 Only use this method if `--rpmdb` is unavailable or not working. The modern `--rpmdb` approach above is significantly faster and doesn't require pulling multi-GB container images.
 
 ```bash
-# Get RHCOS image reference
+# Get RHEL 9 RHCOS image reference
 RHCOS_IMAGE=$(oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 --image-for rhel-coreos)
+
+# Get RHEL 10 RHCOS image reference (OCP 4.21+)
+RHCOS10_IMAGE=$(oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 --image-for rhel-coreos-10)
 
 # Pull and query (slow - downloads ~1GB image)
 podman pull $RHCOS_IMAGE
@@ -143,50 +182,62 @@ Replace `amd64` in the URL with other architectures:
 
 ## Examples
 
-### Full Workflow: Get Latest 4.21 RPMs
+### Full Workflow: Get Latest 4.21 RPMs (Both Variants)
 
 ```bash
 # 1. Find latest version
 VERSION=$(curl -s "https://amd64.ocp.releases.ci.openshift.org/api/v1/releasestreams/accepted" | \
   jq -r '."4-stable"[] | select(startswith("4.21.") and (contains("-rc") | not))' | head -1)
 
-# 2. List all RPMs
+# 2. List RPMs - RHEL 9 variant
 oc adm release info quay.io/openshift-release-dev/ocp-release:${VERSION}-x86_64 \
-  --rpmdb --rpmdb-cache /tmp/rpmdb-cache
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos
 
-# 3. Or query specific package
+# 3. List RPMs - RHEL 10 variant (OCP 4.21+)
 oc adm release info quay.io/openshift-release-dev/ocp-release:${VERSION}-x86_64 \
-  --rpmdb --rpmdb-cache /tmp/rpmdb-cache | grep kernel
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10
+
+# 4. Query specific package in both variants
+oc adm release info quay.io/openshift-release-dev/ocp-release:${VERSION}-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos | grep kernel
+
+oc adm release info quay.io/openshift-release-dev/ocp-release:${VERSION}-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10 | grep kernel
 ```
 
 ## RHEL Package Flow to RHCOS
 
-RHCOS picks up packages from RHEL composes. Understanding the brew tag flow is essential for tracking when packages will appear in RHCOS.
+RHCOS picks up packages from RHEL composes. Understanding the brew tag flow is essential for tracking when packages will appear in RHCOS. For OCP 4.21+, this applies independently to both the RHEL 9 and RHEL 10 variants.
 
 ### Brew Tag Flow
 
 | Tag | Meaning | When RHCOS Picks It Up |
 |-----|---------|------------------------|
-| `rhel-9.X.0-pending` | Tagged for 9.X GA content | Picked up in pre-GA RHCOS builds |
-| `rhel-9.X.0-z-pending` | Tagged for 0-day errata | Picked up after GA (0-day builds) |
+| `rhel-9.X.0-pending` | Tagged for 9.X GA content | Picked up in pre-GA RHCOS (RHEL 9) builds |
+| `rhel-9.X.0-z-pending` | Tagged for 0-day errata | Picked up after GA (RHEL 9, 0-day builds) |
+| `rhel-10.X.0-pending` | Tagged for 10.X GA content | Picked up in pre-GA RHCOS (RHEL 10) builds |
+| `rhel-10.X.0-z-pending` | Tagged for 0-day errata | Picked up after GA (RHEL 10, 0-day builds) |
 
-**Key insight:** If a package only has the `-z-pending` tag, it won't appear in RHCOS until after RHEL GA unless an exception is granted.
+**Key insight:** If a package only has the `-z-pending` tag, it won't appear in RHCOS until after RHEL GA unless an exception is granted. This applies to both RHEL 9 and RHEL 10 variants independently.
 
 ### Checking Brew Tags
 
 ```bash
-# Check tag history for a build
+# Check tag history for a build (RHEL 9)
 brew list-history --tag rhel-9.8.0-pending --build <package-nvr>
 
-# Example
+# Example (RHEL 9)
 brew list-history --tag rhel-9.8.0-pending --build resource-agents-4.10.0-107.el9
+
+# Check tag history for a build (RHEL 10)
+brew list-history --tag rhel-10.0.0-pending --build <package-nvr>
 ```
 
 > See `rhcos-brew` skill for more brew commands and NVR conventions.
 
 ## RHEL Compose Structure
 
-RHCOS builds consume packages from RHEL composes. The compose type determines timing.
+RHCOS builds consume packages from RHEL composes. The compose type determines timing. For OCP 4.21+, both RHEL 9 and RHEL 10 composes feed their respective RHCOS variants.
 
 ### Compose Types
 
@@ -195,13 +246,17 @@ RHCOS builds consume packages from RHEL composes. The compose type determines ti
 | `.d.#` | Development | Development compose (e.g., `RHEL-9.8.0-20260308.d.3`) |
 | `.n.#` | Nightly | Nightly compose, picked up by next RHCOS build |
 
-### Compose URL Pattern
+### Compose URL Patterns
 
 ```
+# RHEL 9
 https://download.eng.brq.redhat.com/rhel-9/composes/RHEL-9/RHEL-9.X.0-YYYYMMDD.<type>.<num>/
+
+# RHEL 10
+https://download.eng.brq.redhat.com/rhel-10/composes/RHEL-10/RHEL-10.X.0-YYYYMMDD.<type>.<num>/
 ```
 
-Example structure:
+Example structure (same for both RHEL 9 and RHEL 10):
 ```
 RHEL-9.8.0-20260308.d.3/
 └── compose/
@@ -212,10 +267,10 @@ RHEL-9.8.0-20260308.d.3/
 
 ### Timing
 
-1. Package tagged in brew with `rhel-9.X.0-pending`
-2. Package appears in nightly RHEL compose
+1. Package tagged in brew with `rhel-9.X.0-pending` or `rhel-10.X.0-pending`
+2. Package appears in nightly RHEL compose (for the respective RHEL version)
 3. Next RHCOS build picks up the compose
-4. Package appears in RHCOS nightly (typically next day)
+4. Package appears in RHCOS nightly for that variant (typically next day)
 
 ## Extensions Image Inspection
 
@@ -243,13 +298,14 @@ quay.io/openshift-release-dev/ocp-v4.0-art-dev:<ocp-version>-<rhel-version>-node
 
 Examples:
 - `4.22-9.8-node-image-extensions` - OCP 4.22 with RHEL 9.8
-- `4.21-9.6-node-image-extensions` - OCP 4.21 with RHEL 9.6
+- `4.21-9.6-node-image-extensions` - OCP 4.21 with RHEL 9.6 (RHEL 9 variant)
+- `4.21-10.0-node-image-extensions` - OCP 4.21 with RHEL 10.0 (RHEL 10 variant, OCP 4.21+)
 
 ## Monitoring RHCOS Builds
 
 ### Slack Channel
 
-The `#jenkins-rhcos-art` Slack channel shows RHCOS build status. Look for successful `4.X-9.Y` node image builds.
+The `#jenkins-rhcos-art` Slack channel shows RHCOS build status. For OCP 4.21+, look for successful node image builds for both RHEL 9 (`4.X-9.Y`) and RHEL 10 (`4.X-10.Y`) variants.
 
 ### Build Status
 
@@ -263,23 +319,47 @@ When a package isn't appearing in RHCOS:
 
 Step-by-step workflow when a package isn't showing up:
 
+### Step 0: Identify Which Variant Is Affected
+
+For OCP 4.21+, determine whether the package is missing from the RHEL 9 variant, the RHEL 10 variant, or both:
+
+```bash
+# Check RHEL 9 variant
+oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos | grep <package>
+
+# Check RHEL 10 variant (OCP 4.21+)
+oc adm release info quay.io/openshift-release-dev/ocp-release:<version>-x86_64 \
+  --rpmdb --rpmdb-cache /tmp/rpmdb-cache --rpmdb-image rhel-coreos-10 | grep <package>
+```
+
+The remaining steps apply independently to each variant based on its RHEL base version.
+
 ### Step 1: Check Brew Tags
 
 ```bash
 # Does the build have the right tag?
 brew list-tags --build=<package-nvr>
 
-# Check tag history
+# Check tag history (RHEL 9)
 brew list-history --tag rhel-9.X.0-pending --build <package-nvr>
+
+# Check tag history (RHEL 10)
+brew list-history --tag rhel-10.X.0-pending --build <package-nvr>
 ```
 
-**Expected:** Build should have `rhel-9.X.0-pending` tag (not just `-z-pending`).
+**Expected:** Build should have `rhel-9.X.0-pending` or `rhel-10.X.0-pending` tag (not just `-z-pending`).
 
 ### Step 2: Check RHEL Compose
 
 Browse the compose directory to verify the package is included:
+
 ```
+# RHEL 9
 https://download.eng.brq.redhat.com/rhel-9/composes/RHEL-9/
+
+# RHEL 10
+https://download.eng.brq.redhat.com/rhel-10/composes/RHEL-10/
 ```
 
 Look for nightly composes (`.n.#` suffix) and check the relevant repo (BaseOS, AppStream, HighAvailability).
@@ -287,8 +367,8 @@ Look for nightly composes (`.n.#` suffix) and check the relevant repo (BaseOS, A
 ### Step 3: Check RHCOS Pipeline
 
 - Check `#jenkins-rhcos-art` for recent build status
-- Look for successful `4.X-9.Y` node image builds
-- Pipeline failures block package updates
+- For OCP 4.21+, look for successful builds for both `4.X-9.Y` (RHEL 9) and `4.X-10.Y` (RHEL 10) node images
+- Pipeline failures block package updates for that variant
 
 ### Step 4: Verify in Extensions Image
 
