@@ -1,0 +1,9 @@
+{
+  "name": "jenkins-plugin-updater",
+  "version": "0.1.0",
+  "description": "Check Jenkins plugin compatibility and find the highest version that works without fast-tracks",
+  "author": {
+    "name": "aaradhak"
+  },
+  "keywords": ["jenkins", "plugins", "dependency", "compatibility"]
+}
