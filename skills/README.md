@@ -6,6 +6,7 @@ Specialized skills for RHCOS/COREOS pipeline operations, build systems, and infr
 
 | Skill | Description |
 |-------|-------------|
+| `backport` | Backport upstream commits (GitHub PRs/commit SHAs) into CentOS Stream or RHEL dist-git packages - patch generation, spec updates, RHEL JIRA ticket creation, branching, and commits |
 | `initramfs-investigation` | Investigate initramfs issues - extraction, module analysis, and comparing working vs failing builds |
 | `pipeline-dedup` | Deduplication logic for CI pipeline failures - check Jira for existing tracking with semantic analysis |
 | `pipeline-failures` | Investigate Jenkins CI pipeline failures - failure patterns, root cause analysis, and debugging workflows |
