@@ -82,12 +82,12 @@ commit SHA(s) to backport.
 - Navigate to the user's local upstream repo
 - Fetch the latest if needed: `git fetch origin`
 - Examine the commit:
-  ```bash
+  ```
   git show <commit-sha> --stat
   git log --oneline <commit-sha> -1
   ```
 - Generate the full patch to review the changes:
-  ```bash
+  ```
   git format-patch -1 <commit-sha> --stdout
   ```
 - Identify which files are modified and confirm scope with the user if the
@@ -104,7 +104,7 @@ version:
   `2026.1`)
 - Compare the modified files between the upstream tag and the commit's
   parent:
-  ```bash
+  ```
   git diff v<version> <commit-sha>^ -- <modified-files>
   ```
 - If the diff output is empty, the patch applies cleanly - no rebasing
@@ -117,7 +117,7 @@ version:
 Generate a `git format-patch` from the upstream repo and place it directly
 in the dist-git directory:
 
-```bash
+```
 git format-patch -1 <commit-sha> --stdout > /path/to/dist-git/0001-short-description.patch
 ```
 
@@ -233,16 +233,16 @@ Save the ticket key (e.g., `RHEL-174914`) for use in the commit message.
 **Branching**
 
 1. Fetch the latest from origin:
-   ```bash
+   ```
    git fetch origin
    ```
 2. Create a new branch based on the target branch, named
    `backport-<ticket-number>`:
-   ```bash
+   ```
    git checkout -b backport-<ticket-number> origin/<target-branch>
    ```
    Example:
-   ```bash
+   ```
    git checkout -b backport-174914 origin/c10s
    ```
 3. **Start here if a backport commit for this fix already exists on
@@ -259,7 +259,7 @@ Save the ticket key (e.g., `RHEL-174914`) for use in the commit message.
 
 Stage the patch file and spec file, then commit:
 
-```bash
+```
 git add <patch-file> <package>.spec
 git commit -m "Backport https://github.com/<org>/<repo>/pull/<PR-number>" -m "Resolves: RHEL-XXXXXX"
 ```
@@ -271,7 +271,7 @@ Commit message format:
 
 Example:
 
-```bash
+```
 git commit \
   -m "Backport https://github.com/ostreedev/ostree/pull/3587" \
   -m "Resolves: RHEL-174914"
@@ -281,14 +281,14 @@ If this commit came from a successful cherry-pick (Branching step 3), the
 trailer still refers to the **previous** stream's ticket - amend it to
 reference this stream's own ticket instead:
 
-```bash
+```
 git commit --amend -m "Backport https://github.com/<org>/<repo>/pull/<PR-number>" \
                     -m "Resolves: <THIS-STREAM-TICKET-KEY>"
 ```
 
 **Verify the Final State**
 
-```bash
+```
 git log --oneline -3
 ```
 
@@ -328,7 +328,7 @@ restart from Step 2. Instead:
    each stream gets its own ticket, with its own Fix Version.
 3. Branch from this stream's target branch and attempt the cherry-pick
    first (Step 8, Branching step 3):
-   ```bash
+   ```
    git fetch origin
    git checkout -b backport-<this-stream-ticket-number> origin/<this-target-branch>
    git cherry-pick <prior-backport-commit-sha>
